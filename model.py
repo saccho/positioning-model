@@ -193,6 +193,7 @@ def objective(X_train, y_train, model_name, trial):
     logger.debug('Cross-validation end')
     mean_accuracy = np.mean(list_accuracy)
     logger.debug('mean of accuracy: {}'.format(mean_accuracy))
+
     return 1 - mean_accuracy
 
 # %%
@@ -225,11 +226,6 @@ def main():
     # Load data
     X_train, X_test, y_train, y_test = load_data()
 
-    # Count labels
-    unique_y_train = np.unique(y_train, return_counts=True)
-    unique_y_test = np.unique(y_test, return_counts=True)
-    logger.debug('    y_train: {}, y_test: {}'.format(unique_y_train, unique_y_test))
-
     # Training
     clf, _ = model_tuning(X_train, y_train, model_name='SVC', n_trials=50)
     # clf = RandomForestClassifier(n_estimators=1000, max_features='sqrt', criterion='gini')
@@ -247,7 +243,7 @@ def main():
     logger.info('    F-measure: {}'.format(f1))
     logger.info('    Mean of f-measure: {}'.format(np.mean(f1)))
     logger.info('    Params: {}'.format(clf.get_params()))
-    # for key, value in clf.get_params():
+    # for key, value in params():
     #     logger.info('        {}: {}'.format(key, value))
 
     labels = [int(i) for i in list(set(y_test))]
@@ -257,6 +253,5 @@ def main():
 
 # %%
 if __name__ == "__main__":
-    logfile_path = os.path.join('log', 'model.log')
-    logger = get_logger(__name__, logfile_path)
+    logger = get_logger(__name__)
     main()
