@@ -9,11 +9,10 @@ def get_logger(name, filename):
     handler.setFormatter(log_fmt)
     logger.addHandler(handler)
 
-    handler = FileHandler(filename=r'log\RandomForest.log')
+    handler = FileHandler(filename=filename)
     handler.setLevel(DEBUG)
     handler.setFormatter(log_fmt)
     logger.setLevel(DEBUG)
     logger.addHandler(handler)
 
     return logger
-    
