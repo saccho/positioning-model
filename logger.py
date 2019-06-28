@@ -1,7 +1,11 @@
 import os
 from logging import StreamHandler, DEBUG, Formatter, FileHandler, getLogger
+from config import LOG_FILE_PATH
 
-def get_logger(name):
+def get_logger(name, filename=None):
+    if filename == None:
+        filename = LOG_FILE_PATH
+
     logger = getLogger(name)
 
     log_fmt = Formatter('%(asctime)s %(name)s %(lineno)d [%(levelname)s][%(funcName)s] %(message)s ')
@@ -10,7 +14,7 @@ def get_logger(name):
     handler.setFormatter(log_fmt)
     logger.addHandler(handler)
 
-    handler = FileHandler(filename=os.path.join('log', 'model.log'))
+    handler = FileHandler(filename=filename)
     handler.setLevel(DEBUG)
     handler.setFormatter(log_fmt)
     logger.setLevel(DEBUG)
