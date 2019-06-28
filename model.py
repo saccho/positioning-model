@@ -1,8 +1,6 @@
 # %%
-import os
 import time
 from functools import partial
-from logging import DEBUG, FileHandler, Formatter, StreamHandler, getLogger
 
 import lightgbm as lgb
 import matplotlib.pyplot as plt
@@ -23,8 +21,8 @@ from logger import get_logger
 
 # %%
 def train_model(X, X_test, y, params=None, folds=None, model_type='lgb', model=None, plot_feature_importance=False):
-    n_fold = 3
     if folds == None:
+        n_fold = 3
         folds = StratifiedKFold(n_splits=n_fold, shuffle=True, random_state=11)
     oof = np.zeros(len(X))
     prediction = np.zeros(len(X_test))
