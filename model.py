@@ -18,6 +18,7 @@ from sklearn.svm import SVC, NuSVC
 
 from load_data import load_data
 from logger import get_logger
+from figure import plot_confusion_matrix
 
 # %%
 def train_model(X, X_test, y, params=None, folds=None, model_type='lgb', model=None, plot_feature_importance=False):
@@ -248,6 +249,7 @@ def main():
     labels.sort()
     cmx = confusion_matrix(y_test, y_pred, labels=labels)
     logger.info('Confusion matrix:\n{}'.format(cmx))
+    plot_confusion_matrix(cmx)
 
 # %%
 if __name__ == "__main__":

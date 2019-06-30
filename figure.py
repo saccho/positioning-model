@@ -25,6 +25,7 @@ def misclass(y_test, y_pred):
     return indices_misclass, y_misclass
 
 def plot_corr_features(data_df):
+    logger.debug('plot feature correlation')
     colormap = plt.get_cmap('seismic')
     plt.figure(figsize=(10, 10))
     plt.title('Correlation of Features', y=1.05, size=20)
@@ -101,6 +102,17 @@ def features_frequency(data_df):
             logger.debug(obj_col)
             for k, v in zip(vc_obj_key, vc_obj_val):
                 logger.debug(f'    {k}: {v:.2f}%')
+
+def plot_confusion_matrix(cmx):
+    sns.set(font_scale=3.0)
+    colormap = plt.get_cmap('Blues')
+    plt.figure(figsize=(10, 10))
+    fig = sns.heatmap(cmx, linewidths=0.1, vmin=0, vmax=cmx.max(), 
+                square=True, cmap=colormap, linecolor='white', annot=True)
+    fig.set_xticklabels(fig.get_xticklabels(), rotation=0)
+    fig.set_yticklabels(fig.get_yticklabels(), rotation=0)
+    plt.tight_layout()
+    plt.show()
 
 # %%
 if __name__ == "__main__":
