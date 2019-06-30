@@ -223,12 +223,18 @@ def model_tuning(X_train, y_train, model_name, n_trials=10):
 # %%
 def main():
     # Load data
-    X_train, X_test, y_train, y_test = load_data()
+    X_train, X_test, y_train, y_test = load_data(isdrop_delay=False)
 
     # Training
     clf, _ = model_tuning(X_train, y_train, model_name='SVC', n_trials=50)
+
     # clf = RandomForestClassifier(n_estimators=1000, max_features='sqrt', criterion='gini')
-    # clf = Pipeline([('scaler', StandardScaler()), ('clf', SVC(C=10))])
+    # params = {
+    #     'C': 1.1820939900623273,
+    #     'kernel': 'rbf',
+    #     'gamma': 0.1977483570545047
+    # }
+    # clf = Pipeline([('scaler', StandardScaler()), ('clf', SVC(**params))])
 
     _, y_pred = train_model(X=X_train, X_test=X_test, y=y_train, model_type='sklearn', model=clf)
 

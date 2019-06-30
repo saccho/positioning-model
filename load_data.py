@@ -7,8 +7,8 @@ from config import DATA_FILE_PATH, DATA_COL_NAMES
 
 logger = get_logger(__name__)
 
-def load_data():
-    data_df = load_measured_data()
+def load_data(isdrop_delay=False):
+    data_df = load_measured_data(isdrop_delay)
 
     logger.debug('split for training and testing')
     data = data_df.values
@@ -17,8 +17,8 @@ def load_data():
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.45, random_state=0)
 
-    X_train_df = pd.DataFrame(X_train, columns=DATA_COL_NAMES[1:])
-    X_test_df = pd.DataFrame(X_test, columns=DATA_COL_NAMES[1:])
+    X_train_df = pd.DataFrame(X_train, columns=data_df.columns[1:])
+    X_test_df = pd.DataFrame(X_test, columns=data_df.columns[1:])
 
     logger.info('train shape: {}, test shape: {}'.format(np.shape(X_train), np.shape(X_test)))
     # Count labels
@@ -28,9 +28,12 @@ def load_data():
 
     return X_train_df, X_test_df, y_train, y_test
 
-def load_measured_data():
+def load_measured_data(isdrop_delay=False):
     logger.debug('measured data loading')
     data_df = pd.read_csv(DATA_FILE_PATH, names=DATA_COL_NAMES)
     logger.debug('done')
-
-    return data_df
+    
+    if isdrop_delay == True:
+        return data_df.drop(columns=DATA_COL_NAMES[4:])
+    else:
+        return data_df
