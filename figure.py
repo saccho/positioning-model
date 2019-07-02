@@ -7,9 +7,10 @@ import seaborn as sns
 from load_data import load_measured_data
 from logger import get_logger
 
+logger = get_logger(__name__)
+
 plt.rcParams['font.family'] = 'Times New Roman'
 plt.rcParams["mathtext.fontset"] = 'stix'
-scatter_size = 150
 sns.set_context(context='paper', font_scale=2.5)
 cmap = plt.get_cmap('tab20')
 
@@ -68,28 +69,24 @@ def boxplot_features(data_df):
 
 def features_frequency(data_df):
     cols = data_df.columns
-    len_cols = len(cols)
     
     obj_cols = []
     obj_df = pd.DataFrame()
     num_df = pd.DataFrame()
     
-    j = 0
     logger.debug('plot numerical features')
-    while j < len_cols:
-        if data_df[cols[j]].dtypes != 'O':
-            num_df[cols[j]] = data_df[cols[j]]
+    for col in cols:
+        if data_df[col].dtypes != 'O':
+            num_df[col] = data_df[col]
         else:
-            obj_cols.append(cols[j])
-            obj_df[cols[j]] = data_df[cols[j]]
+            obj_cols.append(col)
+            obj_df[col] = data_df[col]
             
         if num_df.shape[1] == 6:
             histplot_features(num_df)
             boxplot_features(num_df)
             num_df = pd.DataFrame()
-            
-        j += 1
-        
+
     if num_df.shape[1] != 0:
         histplot_features(num_df)
         boxplot_features(num_df)
@@ -104,6 +101,7 @@ def features_frequency(data_df):
                 logger.debug(f'    {k}: {v:.2f}%')
 
 def plot_confusion_matrix(cmx):
+    logger.debug('plot confusion matrix')
     sns.set(font_scale=3.0)
     colormap = plt.get_cmap('Blues')
     plt.figure(figsize=(10, 10))
@@ -116,7 +114,6 @@ def plot_confusion_matrix(cmx):
 
 # %%
 if __name__ == "__main__":
-    logger = get_logger(__name__)
     data_df = load_measured_data()
     plot_corr_features(data_df)
     features_frequency(data_df.drop(columns='Position'))

@@ -25,6 +25,8 @@ def train_model(X, X_test, y, params=None, folds=None, model_type='lgb', model=N
     if folds == None:
         n_fold = 3
         folds = StratifiedKFold(n_splits=n_fold, shuffle=True, random_state=11)
+    else:
+        n_fold = folds.n_splits
     oof = np.zeros(len(X))
     prediction = np.zeros(len(X_test))
     scores = []
@@ -45,7 +47,6 @@ def train_model(X, X_test, y, params=None, folds=None, model_type='lgb', model=N
             # y_pred = model.predict(X_test, num_iteration=model.best_iteration_)
 
         if model_type == 'sklearn':
-            model = model
             model.fit(X_train, y_train)
             
             y_pred_valid = model.predict(X_valid).reshape(-1,)
@@ -62,7 +63,6 @@ def train_model(X, X_test, y, params=None, folds=None, model_type='lgb', model=N
         #     y_pred = model.predict(X_test)
             
         if model_type == 'nn':
-            model = model
             model.fit(x=X_train, y=y_train, validation_data=[X_valid, y_valid], **params)
     
             y_pred_valid = model.predict(X_valid)[:, 0]
@@ -136,6 +136,9 @@ def objective(X_train, y_train, model_name, trial):
             'max_features': trial.suggest_categorical('max_features', ['sqrt', 'log2', None]),
             'min_samples_leaf': trial.suggest_int('min_samples_leaf', 2, 4)
         }
+
+        clf = RandomForestClassifier(**params, n_estimators=1000, random_state=1)
+
     if model_name == 'SVC':
         params = {
             'C': trial.suggest_loguniform('C', 1e0, 1e3),
@@ -144,6 +147,9 @@ def objective(X_train, y_train, model_name, trial):
         }
         if params['kernel'] == 'poly':
             params['degree'] = trial.suggest_int('degree', 3, 5)
+
+        clf = Pipeline([('scaler', StandardScaler()), ('clf', SVC(**params))])
+
     if model_name == 'NuSVC':
         params = {
             'nu': trial.suggest_uniform('nu', 0.001, 1.0),
@@ -152,6 +158,8 @@ def objective(X_train, y_train, model_name, trial):
         }
         if params['kernel'] == 'poly':
             params['degree'] = trial.suggest_int('degree', 3, 5)
+
+        clf = Pipeline([('scaler', StandardScaler()), ('clf', NuSVC(**params))])
 
     logger.debug('current params: ')
     for key, value in params.items():
@@ -175,13 +183,6 @@ def objective(X_train, y_train, model_name, trial):
         logger.debug('    y_trn: {}, y_val: {}'.format(unique_y_trn, unique_y_val))
 
         # Training
-        if model_name == 'RandomForestClassifier':
-            clf = RandomForestClassifier(**params, n_estimators=1000, random_state=1)
-        if model_name == 'SVC':
-            clf = Pipeline([('scaler', StandardScaler()), ('clf', SVC(**params))])
-        if model_name == 'NuSVC':
-            clf = Pipeline([('scaler', StandardScaler()), ('clf', NuSVC(**params))])
-
         clf.fit(x_trn, y_trn)
 
         # Predict result
