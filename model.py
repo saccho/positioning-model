@@ -38,7 +38,8 @@ def train_model(X, X_test, y, params=None, folds=None, model_type='lgb', model=N
         y_train, y_valid = y[train_index], y[valid_index]
         
         if model_type == 'lgb':
-            model = lgb.LGBMRegressor(**params, n_estimators=50000, n_jobs=-1)
+            if model == None:
+                model = lgb.LGBMRegressor(**params, n_estimators=50000, n_jobs=-1)
             model.fit(X_train, y_train, 
                     eval_set=[(X_train, y_train), (X_valid, y_valid)], eval_metric='mae',
                     verbose=10000, early_stopping_rounds=200)
@@ -47,6 +48,8 @@ def train_model(X, X_test, y, params=None, folds=None, model_type='lgb', model=N
             # y_pred = model.predict(X_test, num_iteration=model.best_iteration_)
 
         if model_type == 'sklearn':
+            if model == None:
+                model = RandomForestClassifier(n_estimators=1000, random_state=1)
             model.fit(X_train, y_train)
             
             y_pred_valid = model.predict(X_valid).reshape(-1,)
@@ -90,7 +93,6 @@ def train_model(X, X_test, y, params=None, folds=None, model_type='lgb', model=N
         #     y_pred = model.predict(X_test)
         #     score = mean_absolute_error(y_valid, y_pred_valid.reshape(-1,))
         #     logger.info(f'Fold {fold_n}. MAE: {score:.4f}.')
-        #     logger.info('')
             
         oof[valid_index] = y_pred_valid.reshape(-1,)
         scores.append(mean_absolute_error(y_valid, y_pred_valid))
@@ -143,7 +145,7 @@ def objective(X_train, y_train, model_name, trial):
         params = {
             'C': trial.suggest_loguniform('C', 1e0, 1e3),
             'kernel': trial.suggest_categorical('kernel', ['rbf', 'poly', 'sigmoid']),
-            'gamma': trial.suggest_loguniform('gamma', 1e-2, 1e0),
+            'gamma': trial.suggest_loguniform('gamma', 1e-3, 1e0),
         }
         if params['kernel'] == 'poly':
             params['degree'] = trial.suggest_int('degree', 3, 5)
@@ -224,10 +226,10 @@ def model_tuning(X_train, y_train, model_name, n_trials=10):
 # %%
 def main():
     # Load data
-    X_train, X_test, y_train, y_test = load_data(isdrop_delay=False)
+    X_train, X_test, y_train, y_test = load_data()
 
     # Training
-    clf, _ = model_tuning(X_train, y_train, model_name='SVC', n_trials=50)
+    clf, _ = model_tuning(X_train, y_train, model_name='SVC', n_trials=200)
 
     # clf = RandomForestClassifier(n_estimators=1000, max_features='sqrt', criterion='gini')
     # params = {
