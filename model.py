@@ -28,7 +28,7 @@ def train_model(X, X_test, y, params=None, folds=None, model_type='lgb', model=N
     else:
         n_fold = folds.n_splits
     oof = np.zeros(len(X))
-    prediction = np.zeros(len(X_test))
+    y_pred = pd.DataFrame(np.zeros((len(X_test), n_fold)))
     scores = []
     feature_importance = pd.DataFrame()
     logger.info('train start')
@@ -52,9 +52,12 @@ def train_model(X, X_test, y, params=None, folds=None, model_type='lgb', model=N
                 model = RandomForestClassifier(n_estimators=1000, random_state=1)
             model.fit(X_train, y_train)
             
-            y_pred_valid = model.predict(X_valid).reshape(-1,)
-            score = mean_absolute_error(y_valid, y_pred_valid)
-            logger.info(f'    Fold {fold_n}. MAE: {score:.4f}.')
+            y_pred_valid = model.predict(X_valid)
+            accuracy = accuracy_score(y_valid, y_pred_valid)
+            f1 = f1_score(y_valid, y_pred_valid, average='macro')
+            logger.info(f'    Fold {fold_n}. Accuracy: {accuracy:.4f}.')
+            logger.info(f'    Fold {fold_n}. Macro-F1: {f1:.4f}.')
+            y_pred.loc[:, fold_n] = model.predict(X_test)
             
             # y_pred = model.predict(X_test).reshape(-1,)
         
@@ -97,7 +100,7 @@ def train_model(X, X_test, y, params=None, folds=None, model_type='lgb', model=N
         oof[valid_index] = y_pred_valid.reshape(-1,)
         scores.append(mean_absolute_error(y_valid, y_pred_valid))
 
-        # prediction += y_pred
+        prediction = y_pred.mode(axis=1)[0]
         
         if model_type == 'lgb':
             # feature importance
@@ -107,7 +110,6 @@ def train_model(X, X_test, y, params=None, folds=None, model_type='lgb', model=N
             fold_importance["fold"] = fold_n + 1
             feature_importance = pd.concat([feature_importance, fold_importance], axis=0)
 
-    prediction = model.predict(X_test)
     logger.info('train end')
     logger.info('CV mean score: {0:.4f}, std: {1:.4f}.'.format(np.mean(scores), np.std(scores)))
         
@@ -229,15 +231,16 @@ def main():
     X_train, X_test, y_train, y_test = load_data()
 
     # Training
-    clf, _ = model_tuning(X_train, y_train, model_name='SVC', n_trials=200)
+    # clf, _ = model_tuning(X_train, y_train, model_name='SVC', n_trials=200)
 
+    # Best params
     # clf = RandomForestClassifier(n_estimators=1000, max_features='sqrt', criterion='gini')
-    # params = {
-    #     'C': 1.1820939900623273,
-    #     'kernel': 'rbf',
-    #     'gamma': 0.1977483570545047
-    # }
-    # clf = Pipeline([('scaler', StandardScaler()), ('clf', SVC(**params))])
+    params = {
+        'C': 1.1820939900623273,
+        'kernel': 'rbf',
+        'gamma': 0.1977483570545047
+    }
+    clf = Pipeline([('scaler', StandardScaler()), ('clf', SVC(**params))])
 
     _, y_pred = train_model(X=X_train, X_test=X_test, y=y_train, model_type='sklearn', model=clf)
 
