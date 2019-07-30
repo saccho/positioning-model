@@ -7,21 +7,21 @@ from config import DATA_FILE_PATH, DATA_COL_NAMES
 
 logger = get_logger(__name__)
 
-def load_data(isdrop_delay=False, test_size=0.45, is_stratify=True):
+def load_data(y_cols=('Position',), isdrop_delay=False, test_size=0.45, is_stratify=True):
     data_df = load_measured_data(isdrop_delay)
 
     logger.debug('split for training and testing')
-    data = data_df.values
-    X = data[:, 1:]
-    y = data[:, 0]
+    X_cols = [c for c in DATA_COL_NAMES if c not in y_cols]
+    X = data_df.loc[:, X_cols].values
+    y = data_df.loc[:, y_cols].values.reshape(-1)
 
     if is_stratify:
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, random_state=0, stratify=y)
     else:
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, random_state=0)
 
-    X_train_df = pd.DataFrame(X_train, columns=data_df.columns[1:])
-    X_test_df = pd.DataFrame(X_test, columns=data_df.columns[1:])
+    X_train_df = pd.DataFrame(X_train, columns=X_cols)
+    X_test_df = pd.DataFrame(X_test, columns=X_cols)
 
     logger.info('train shape: {}, test shape: {}'.format(np.shape(X_train), np.shape(X_test)))
     # Count labels
