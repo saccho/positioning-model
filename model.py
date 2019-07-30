@@ -45,7 +45,7 @@ def train_model(X, X_test, y, params=None, folds=None, model_type='lgb', model=N
                     verbose=10000, early_stopping_rounds=200)
             
             y_pred_valid = model.predict(X_valid)
-            # y_pred = model.predict(X_test, num_iteration=model.best_iteration_)
+            y_pred.loc[:, fold_n] = model.predict(X_test, num_iteration=model.best_iteration_)
 
         if model_type == 'sklearn':
             if model == None:
@@ -59,20 +59,11 @@ def train_model(X, X_test, y, params=None, folds=None, model_type='lgb', model=N
             logger.info(f'    Fold {fold_n}. Macro-F1: {f1:.4f}.')
             y_pred.loc[:, fold_n] = model.predict(X_test)
             
-            # y_pred = model.predict(X_test).reshape(-1,)
-        
-        # if model_type == 'cat':
-        #     model = CatBoostRegressor(iterations=20000,  eval_metric='MAE', **params)
-        #     model.fit(X_train, y_train, eval_set=(X_valid, y_valid), cat_features=[], use_best_model=True, verbose=False)
-
-        #     y_pred_valid = model.predict(X_valid)
-        #     y_pred = model.predict(X_test)
-            
         if model_type == 'nn':
             model.fit(x=X_train, y=y_train, validation_data=[X_valid, y_valid], **params)
     
             y_pred_valid = model.predict(X_valid)[:, 0]
-            # y_pred = model.predict(X_test)[:, 0]
+            y_pred.loc[:, fold_n] = model.predict(X_test)[:, 0]
             
             history = model.history.history
             train_loss = history["loss"]
@@ -87,16 +78,7 @@ def train_model(X, X_test, y, params=None, folds=None, model_type='lgb', model=N
             plt.legend()
             plt.xlabel('epoch')
             plt.ylabel('loss')
-            
-        # if model_type == 'gpl':
-        #     model = SymbolicRegressor(**params, metric='mean absolute error', n_jobs=-1, random_state=42)
-    
-        #     model.fit(X_train, y_train)
-        #     y_pred_valid = model.predict(X_valid)
-        #     y_pred = model.predict(X_test)
-        #     score = mean_absolute_error(y_valid, y_pred_valid.reshape(-1,))
-        #     logger.info(f'Fold {fold_n}. MAE: {score:.4f}.')
-            
+
         oof[valid_index] = y_pred_valid.reshape(-1,)
         scores.append(mean_absolute_error(y_valid, y_pred_valid))
 
@@ -257,7 +239,7 @@ def main():
     # for key, value in params():
     #     logger.info('        {}: {}'.format(key, value))
 
-    labels = [int(i) for i in list(set(y_test))]
+    labels = np.unique(y_test)
     labels.sort()
     cmx = confusion_matrix(y_test, y_pred, labels=labels)
     logger.info('Confusion matrix:\n{}'.format(cmx))
