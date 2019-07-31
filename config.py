@@ -1,6 +1,6 @@
 import os
 
-MEASURED_DAY = '20190626'
+MEASURED_DAY = '20190726'
 # DATA_FILE_PATH = os.path.join('data', MEASURED_DAY, 'dataset.csv')
 # DATA_COL_NAMES = [
 #     'Position', 
@@ -9,7 +9,7 @@ MEASURED_DAY = '20190626'
 # ]
 DATA_FILE_PATH = os.path.join('data', MEASURED_DAY, 'y_dataset.csv')
 DATA_COL_NAMES = [
-    'Position', 
+    'Position_x', 'Position_y', 
     r'$\rm{Re}(\it{y_{1, 1}})$', r'$\rm{Re}(\it{y_{2, 1}})$', r'$\rm{Re}(\it{y_{3, 1}})$',
     r'$\rm{Re}(\it{y_{1, 2}})$', r'$\rm{Re}(\it{y_{2, 2}})$', r'$\rm{Re}(\it{y_{3, 2}})$',
     r'$\rm{Im}(\it{y_{1, 1}})$', r'$\rm{Im}(\it{y_{2, 1}})$', r'$\rm{Im}(\it{y_{3, 1}})$',

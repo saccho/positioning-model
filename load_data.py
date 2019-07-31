@@ -13,7 +13,7 @@ def load_data(y_cols=('Position',), isdrop_delay=False, test_size=0.45, is_strat
     logger.debug('split for training and testing')
     X_cols = [c for c in DATA_COL_NAMES if c not in y_cols]
     X = data_df.loc[:, X_cols].values
-    y = data_df.loc[:, y_cols].values.reshape(-1)
+    y = data_df.loc[:, y_cols].values
 
     if is_stratify:
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, random_state=0, stratify=y)
