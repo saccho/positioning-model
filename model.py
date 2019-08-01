@@ -480,7 +480,7 @@ def main():
     # pred_animation(y_test, y_pred, is_save=False)
     # plot_score(y_test, euclidean_dist, is_save=False)
     # plot_score_cdf(euclidean_dist, is_save=False)
-    plot_feature_importance(fe)
+    plot_feature_importance(fe, is_save=False)
 
 # %%
 if __name__ == "__main__":

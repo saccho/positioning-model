@@ -171,7 +171,7 @@ def plot_score_cdf(y_pred_score, is_save=False):
         plt.savefig(os.path.join(FIGURE_SAVE_PATH, 'score_cdf.png'))
     plt.show()
 
-def plot_feature_importance(feature_importance, top=50):
+def plot_feature_importance(feature_importance, top=50, is_save=False):
     cols = feature_importance[["feature", "importance"]].groupby("feature").mean().sort_values(
         by="importance", ascending=False)[:top].index
 
@@ -180,6 +180,8 @@ def plot_feature_importance(feature_importance, top=50):
     plt.figure(figsize=(15, 10))
     sns.barplot(x="importance", y="feature", data=best_features.sort_values(by="importance", ascending=False))
     plt.tight_layout()
+    if is_save:
+        plt.savefig(os.path.join(FIGURE_SAVE_PATH, 'feature_importance.png'))
     plt.show()
 
 # %%
