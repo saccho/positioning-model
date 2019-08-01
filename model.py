@@ -32,12 +32,11 @@ def objective(X_train, y_train, model_name, trial):
     if model_name == 'RandomForestClassifier' or model_name == 'RandomForestRegressor':
         params = {
             'max_depth': trial.suggest_int('max_depth', 2, 5),
-            'max_features': trial.suggest_categorical('max_features', ['auto', 'sqrt', 'log2']),
-            'min_samples_leaf': trial.suggest_int('min_samples_leaf', 2, 4)
+            'min_samples_leaf': trial.suggest_int('min_samples_leaf', 1, 4)
         }
         if model_name == 'RandomForestClassifier':
             params['criterion'] = trial.suggest_categorical('criterion', ['gini', 'entropy'])
-            model = RandomForestClassifier(**params, n_estimators=1000, random_state=1)
+            model = RandomForestClassifier(**params, n_estimators=200, random_state=1)
         if model_name == 'RandomForestRegressor':
             params['criterion'] = trial.suggest_categorical('criterion', ['mse', 'mae'])
             model = RandomForestRegressor(**params, n_estimators=200, random_state=1)
@@ -260,13 +259,13 @@ class RegressorModel:
             load_data(y_cols=y_cols, test_size=test_size, is_stratify=is_stratify, random_state=random_state)
 
     def _param_tuning(self):
-        _, self.params = model_tuning(self.X_train, self.y_train, self.model_name, n_trials=50)
+        _, self.params = model_tuning(self.X_train, self.y_train, self.model_name, n_trials=20)
 
-    def train(self, is_override=False):
-        if self.model is not None and not is_override:
+    def train(self, is_override_model=False, is_override_params=False):
+        if self.model is not None and not is_override_model:
             return
 
-        if self.params is None:
+        if self.params is None or is_override_params:
             self._param_tuning()
             self.saver.save_params(self.params)
 
