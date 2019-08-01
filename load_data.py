@@ -7,18 +7,18 @@ from config import DATA_FILE_PATH, DATA_COL_NAMES
 
 logger = get_logger(__name__)
 
-def load_data(y_cols=('Position',), isdrop_delay=False, test_size=0.45, is_stratify=True):
+def load_data(y_cols=('Position',), isdrop_delay=False, test_size=0.45, is_stratify=True, random_state=0):
     data_df = load_measured_data(isdrop_delay)
 
     logger.debug('split for training and testing')
     X_cols = [c for c in DATA_COL_NAMES if c not in y_cols]
     X = data_df.loc[:, X_cols].values
-    y = data_df.loc[:, y_cols].values.reshape(-1)
+    y = data_df.loc[:, y_cols].values
 
     if is_stratify:
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, random_state=0, stratify=y)
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, random_state=random_state, stratify=y)
     else:
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, random_state=0)
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, random_state=random_state)
 
     X_train_df = pd.DataFrame(X_train, columns=X_cols)
     X_test_df = pd.DataFrame(X_test, columns=X_cols)
