@@ -343,7 +343,7 @@ def main():
     X_train, X_test, y_train, y_test = load_data(y_cols=['Position_x', 'Position_y'], test_size=0.4, is_stratify=False, random_state=2)
 
     # Training
-    model, _ = model_tuning(X_train, y_train, model_name='RandomForestRegressor', n_trials=50)
+    # model, _ = model_tuning(X_train, y_train, model_name='RandomForestRegressor', n_trials=50)
 
     # Best params (for classifier)
     # model = RandomForestClassifier(n_estimators=1000, max_features='sqrt', criterion='gini')
@@ -353,6 +353,17 @@ def main():
     #     'gamma': 0.1977483570545047
     # }
     # model = Pipeline([('scaler', StandardScaler()), ('model', SVC(**params))])
+
+    # Best params (for regressor)
+    params = {
+        'n_estimators': 1000,
+        'max_depth': 5,
+        'min_samples_leaf': 2,
+        'criterion': 'mse',
+        'random_state': 1
+    }
+    model = RandomForestRegressor(**params)
+
     _, y_pred = train_regressor_model(X=X_train, X_test=X_test, y=y_train, model_type='sklearn', model=model)
 
     mse = mean_squared_error(y_test, y_pred)
