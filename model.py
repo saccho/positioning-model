@@ -316,7 +316,7 @@ class RegressorModel:
     def _fit(self, X_train, y_train):
         if self.model_type == 'sklearn':
             if self.model_name == 'RandomForestRegressor':
-                self.model = RandomForestRegressor(n_estimators=1000, **self.params)
+                self.model = RandomForestRegressor(n_estimators=1000, random_state=42, **self.params)
             self.model.fit(X_train, y_train)
 
     def predict(self):
