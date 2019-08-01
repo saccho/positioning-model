@@ -340,7 +340,7 @@ def model_tuning(X_train, y_train, model_name, n_trials=10):
 # %%
 def main():
     # Load data
-    X_train, X_test, y_train, y_test = load_data(y_cols=['Position_x', 'Position_y'], is_stratify=False)
+    X_train, X_test, y_train, y_test = load_data(y_cols=['Position_x', 'Position_y'], test_size=0.4, is_stratify=False, random_state=2)
 
     # Training
     model, _ = model_tuning(X_train, y_train, model_name='RandomForestRegressor', n_trials=50)
@@ -361,7 +361,7 @@ def main():
     logger.info('RESULT:')
     logger.info('    MSE: {}'.format(mse))
     logger.info('    MAE: {}'.format(mae))
-    logger.info('    Euclidean distance: {}'.format(np.mean(euclidean_dist)))
+    logger.info('    Median of Euclidean distance: {}'.format(np.median(euclidean_dist)))
     logger.info('    Params: {}'.format(model.get_params()))
     # for key, value in params():
     #     logger.info('        {}: {}'.format(key, value))
