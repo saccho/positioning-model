@@ -463,23 +463,25 @@ def train_classifier_model(X, X_test, y, params=None, folds=None, model_type='lg
 # %%
 def main():
     rm = RegressorModel(n_folds=0)
-    rm.run()
-    euclidean_dist = rm.get_pred_score()
-    fe = rm.get_feature_importance()
+    rm.load_data()
+    X_train, X_test, y_train, y_test = rm.get_dataset()
+    rm.train(is_override_model=True, is_override_params=True)
+    y_pred = rm.predict()
+    feature_importance = rm.get_feature_importance()
 
-    # mse = mean_squared_error(y_test, y_pred)
-    # mae = mean_absolute_error(y_test, y_pred)
-    # euclidean_dist = euclidean_distance(y_test, y_pred)
+    mse = mean_squared_error(y_test, y_pred)
+    mae = mean_absolute_error(y_test, y_pred)
+    euclidean_dist = euclidean_distance(y_test, y_pred)
     logger.info('RESULT:')
-    # logger.info('    MSE: {}'.format(mse))
-    # logger.info('    MAE: {}'.format(mae))
+    logger.info('    MSE: {}'.format(mse))
+    logger.info('    MAE: {}'.format(mae))
     logger.info('    Median of Euclidean distance: {}'.format(np.median(euclidean_dist)))
-    # logger.info('    Params: {}'.format(model.get_params()))
+    logger.info('    Params: {}'.format(rm.get_params()))
 
-    # pred_animation(y_test, y_pred, is_save=False)
-    # plot_score(y_test, euclidean_dist, is_save=False)
-    # plot_score_cdf(euclidean_dist, is_save=False)
-    plot_feature_importance(fe, is_save=False)
+    pred_animation(y_test, y_pred, is_save=False)
+    plot_score(y_test, euclidean_dist, is_save=False)
+    plot_score_cdf(euclidean_dist, is_save=False)
+    plot_feature_importance(feature_importance, is_save=False)
 
 # %%
 if __name__ == "__main__":
