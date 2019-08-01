@@ -18,7 +18,7 @@ from sklearn.svm import SVC, NuSVC
 
 from load_data import load_data
 from logger import get_logger
-from figure import plot_confusion_matrix
+from figure import pred_animation, plot_score, plot_score_cdf
 
 # %%
 def euclidean_distance(y_test, y_pred):
@@ -374,8 +374,10 @@ def main():
     logger.info('    MAE: {}'.format(mae))
     logger.info('    Median of Euclidean distance: {}'.format(np.median(euclidean_dist)))
     logger.info('    Params: {}'.format(model.get_params()))
-    # for key, value in params():
-    #     logger.info('        {}: {}'.format(key, value))
+
+    # pred_animation(y_test, y_pred, is_save=True)
+    # plot_score(y_test, euclidean_dist, is_save=True)
+    plot_score_cdf(euclidean_dist, is_save=True)
 
 # %%
 if __name__ == "__main__":

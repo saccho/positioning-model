@@ -20,3 +20,5 @@ DATA_COL_NAMES = [
     r'$\rm{Im}(\it{y_{1, 2, 2}})$', r'$\rm{Im}(\it{y_{2, 2, 2}})$', r'$\rm{Im}(\it{y_{3, 2, 2}})$',
 ]
 LOG_FILE_PATH = os.path.join('log', f'use_{MEASURED_DAY}_data.log')
+ROOM_IMAGE_PATH = os.path.join('data', 'room.png')
+FIGURE_SAVE_PATH = os.path.join('data', MEASURED_DAY, 'fig')
