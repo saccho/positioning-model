@@ -17,3 +17,5 @@ DATA_COL_NAMES = [
 LOG_FILE_PATH = os.path.join('log', f'use_{MEASURED_DAY}_data.log')
 ROOM_IMAGE_PATH = os.path.join('data', 'room.png')
 FIGURE_SAVE_PATH = os.path.join(DATA_FILE_PATH, 'fig')
+TRAINED_CLF_MODEL_PATH = os.path.join(DATA_FILE_PATH, 'model', 'classifier')
+TRAINED_REG_MODEL_PATH = os.path.join(DATA_FILE_PATH, 'model', 'regressor')
