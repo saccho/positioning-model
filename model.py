@@ -241,7 +241,7 @@ class ClassifierModel:
                 self.model = self.saver.restore_model(fold_n)
                 self.models.append(self.model)
 
-        if self.model_name == 'RandomForestRegressor':
+        if self.model_name == 'RandomForestClassifier':
             self.feature_importance = self.saver.restore_feature_importance()
 
     def load_data(self, y_cols=['Position'], isdrop_delay=False, test_size=0.4, is_stratify=True, random_state=2):
@@ -277,7 +277,7 @@ class ClassifierModel:
                 scores.append(score)
                 self.oof[valid_index] = y_pred_val
 
-                if self.model_name == 'RandomForestRegressor':
+                if self.model_name == 'RandomForestClassifier':
                     fold_importance = pd.DataFrame()
                     fold_importance["feature"] = X_trn.columns
                     fold_importance["importance"] = self.model.feature_importances_
@@ -294,7 +294,7 @@ class ClassifierModel:
         else:
             self._fit(self.X_train, self.y_train)
 
-            if self.model_name == 'RandomForestRegressor':
+            if self.model_name == 'RandomForestClassifier':
                 self.feature_importance["feature"] = self.X_train.columns
                 self.feature_importance["importance"] = self.model.feature_importances_
             
