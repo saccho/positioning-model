@@ -172,6 +172,9 @@ def plot_score_cdf(y_pred_score, is_save=False):
     plt.show()
 
 def plot_feature_importance(feature_importance, top=50, is_save=False):
+    if len(feature_importance) == 0:
+        return
+
     cols = feature_importance[["feature", "importance"]].groupby("feature").mean().sort_values(
         by="importance", ascending=False)[:top].index
 
