@@ -1,18 +1,23 @@
 # %%
+import os
 import numpy as np
 import pandas as pd
+from PIL import Image
 import matplotlib.pyplot as plt
+from matplotlib.animation import ArtistAnimation
 import seaborn as sns
 
 from load_data import load_measured_data
 from logger import get_logger
 
+from config import ROOM_IMAGE_PATH, FIGURE_SAVE_PATH
+
 logger = get_logger(__name__)
 
 plt.rcParams['font.family'] = 'Times New Roman'
 plt.rcParams["mathtext.fontset"] = 'stix'
-sns.set_context(context='paper', font_scale=2.5)
-cmap = plt.get_cmap('tab20')
+sns.set_context(context='paper', font_scale=4)
+room_image = Image.open(ROOM_IMAGE_PATH)
 
 # %%
 def misclass(y_test, y_pred):
@@ -100,7 +105,7 @@ def features_frequency(data_df):
             for k, v in zip(vc_obj_key, vc_obj_val):
                 logger.debug(f'    {k}: {v:.2f}%')
 
-def plot_confusion_matrix(cmx):
+def plot_confusion_matrix(cmx, is_save=False):
     logger.debug('plot confusion matrix')
     sns.set(font_scale=3.0)
     colormap = plt.get_cmap('Blues')
@@ -110,6 +115,78 @@ def plot_confusion_matrix(cmx):
     fig.set_xticklabels(fig.get_xticklabels(), rotation=0)
     fig.set_yticklabels(fig.get_yticklabels(), rotation=0)
     plt.tight_layout()
+    if is_save:
+        plt.savefig(os.path.join(FIGURE_SAVE_PATH, 'confusion_matrix.png'))
+    plt.show()
+
+def pred_animation(y_test, y_pred, is_save=False):
+    fig = plt.figure(figsize=(15, 10))
+    ims = []
+    plt.imshow(room_image, extent=(0, 7.8, 0, 8.8))
+    # Plot antenna position
+    plt.scatter(7.25, 1.5, color='green', marker=7, s=500)
+    plt.scatter(7.2, 7.1, color='green', marker=7, s=500)
+    for m in range(3):
+        plt.scatter(0.6, 2.763-m*0.063, color='cyan', marker=7, s=500)
+    # Plot true position and predicted position (Animation)
+    for i in range(len(y_test)):
+        im_test = [plt.scatter(y_test[i, 0], y_test[i, 1], color='black', marker='X', s=1200)]
+        im_pred = [plt.scatter(y_pred[i, 0], y_pred[i, 1], color='blue', s=1200, alpha=0.7)]
+        ims.append(im_test+im_pred)
+    plt.xlim(0, 7.8)
+    plt.ylim(0, 8.8)
+    ani = ArtistAnimation(fig, ims, interval=500)
+    if is_save:
+        ani.save(os.path.join(FIGURE_SAVE_PATH, 'pred_anim.mp4'), writer="ffmpeg")
+    plt.show()
+
+def plot_score(y_test, y_pred_score, is_save=False):
+    plt.figure(figsize=(15, 10))
+    plt.imshow(room_image, extent=(0, 7.8, 0, 8.8))
+    # Plot antenna position
+    plt.scatter(7.25, 1.5, color='green', marker=7, s=500)
+    plt.scatter(7.2, 7.1, color='green', marker=7, s=500)
+    for m in range(3):
+        plt.scatter(0.6, 2.763-m*0.063, color='cyan', marker=7, s=500)
+    plt.scatter(y_test[:, 0], y_test[:, 1], c=y_pred_score, cmap='hot_r', s=1200)
+    cbar = plt.colorbar()
+    cbar.set_label('Error (m)')
+    plt.xlim(0, 7.8)
+    plt.ylim(0, 8.8)
+    plt.xlabel(r'$x$ (m)')
+    plt.ylabel(r'$y$ (m)')
+    if is_save:
+        plt.savefig(os.path.join(FIGURE_SAVE_PATH, 'score.png'))
+    plt.show()
+
+def plot_score_cdf(y_pred_score, is_save=False):
+    plt.figure(figsize=(10, 10))
+    sorted_score = np.sort(y_pred_score)
+    cdf = np.arange(len(sorted_score))/float(len(sorted_score)-1)
+    plt.plot(sorted_score, cdf, lw=3, marker='o', ms=12)
+    plt.grid(True)
+    plt.xlim(0, y_pred_score.max())
+    plt.ylim(0, 1)
+    plt.xlabel('Error (m)')
+    plt.ylabel('Cumulative probability')
+    if is_save:
+        plt.savefig(os.path.join(FIGURE_SAVE_PATH, 'score_cdf.png'))
+    plt.show()
+
+def plot_feature_importance(feature_importance, top=50, is_save=False):
+    if len(feature_importance) == 0:
+        return
+
+    cols = feature_importance[["feature", "importance"]].groupby("feature").mean().sort_values(
+        by="importance", ascending=False)[:top].index
+
+    best_features = feature_importance.loc[feature_importance.feature.isin(cols)]
+
+    plt.figure(figsize=(15, 10))
+    sns.barplot(x="importance", y="feature", data=best_features.sort_values(by="importance", ascending=False))
+    plt.tight_layout()
+    if is_save:
+        plt.savefig(os.path.join(FIGURE_SAVE_PATH, 'feature_importance.png'))
     plt.show()
 
 # %%
