@@ -20,7 +20,7 @@ from sklearn.externals import joblib
 
 from load_data import load_data
 from logger import get_logger
-from figure import pred_animation, plot_score, plot_score_cdf, plot_feature_importance
+from figure import plot_confusion_matrix, pred_animation, plot_score, plot_score_cdf, plot_feature_importance
 from config import TRAINED_CLF_MODEL_PATH, TRAINED_REG_MODEL_PATH
 
 # %%
@@ -215,17 +215,144 @@ class Saver:
 
 # %%
 class ClassifierModel:
-    def __init__(self):
-        pass
+    def __init__(self, model_type='sklearn', model_name=None, n_folds=3):
+        self.est_type = 'classifier'
+        self.saver = Saver(self.est_type)
+        self.model_type = model_type
+        if self.model_type == 'sklearn':
+            if model_name is None:
+                self.model_name = 'RandomForestClassifier'
+        else:
+            raise ValueError('model_type supported by current version is "sklearn" only.')
 
-    def load_data(self):
-        pass
+        self.params = self.saver.restore_params()
 
-    def train(self):
-        pass
+        if n_folds == 0:
+            self.is_ensemble = False
+            self.model = self.saver.restore_model()
+        else:
+            self.is_ensemble = True
+            self.n_folds = n_folds
 
-    def tuning(self):
-        pass
+            self.models = []
+            for fold_n in range(self.n_folds):
+                self.model = self.saver.restore_model(fold_n)
+                self.models.append(self.model)
+        
+        self.feature_importance = self.saver.restore_feature_importance()
+
+    def load_data(self, y_cols=['Position'], isdrop_delay=False, test_size=0.4, is_stratify=True, random_state=2):
+        self.X_train, self.X_test, self.y_train, self.y_test = \
+            load_data(y_cols=y_cols, test_size=test_size, is_stratify=is_stratify, random_state=random_state)
+
+    def _param_tuning(self):
+        _, self.params = model_tuning(self.X_train, self.y_train, self.model_name, n_trials=20)
+
+    def train(self, is_override_model=False, is_override_params=False):
+        if self.model is not None and not is_override_model:
+            return
+
+        if self.params is None or is_override_params:
+            self._param_tuning()
+            self.saver.save_params(self.params)
+
+        if self.is_ensemble:
+            self.oof = np.zeros(len(self.X_train))
+            scores = []
+            self.feature_importance = pd.DataFrame()
+            folds = KFold(n_splits=self.n_folds, shuffle=True, random_state=11)
+            for fold_n, (train_index, valid_index) in enumerate(folds.split(self.X_train)):
+                logger.info(f'    Fold {fold_n}, started at {time.ctime()}')
+                X_trn, X_val = self.X_train.iloc[train_index], self.X_train.iloc[valid_index]
+                y_trn, y_val = self.y_train[train_index], self.y_train[valid_index]
+
+                self._fit(X_trn, y_trn)
+                self.models[fold_n] = self.model
+                y_pred_val = self.model.predict(X_val)
+                accuracy = accuracy_score(y_val, y_pred_val)
+                score = np.median(accuracy)
+                logger.info(f'    Fold {fold_n}. Accuracy: {score:.4f}.')
+                scores.append(score)
+                self.oof[valid_index] = y_pred_val
+
+                # feature importance
+                fold_importance = pd.DataFrame()
+                fold_importance["feature"] = X_trn.columns
+                fold_importance["importance"] = self.model.feature_importances_
+                fold_importance["fold"] = fold_n + 1
+                self.feature_importance = pd.concat([self.feature_importance, fold_importance], axis=0)
+
+                self.saver.save_model(self.model, fold_n)
+
+            self.feature_importance["importance"] /= self.n_folds
+            self.saver.save_feature_importance(self.feature_importance)
+
+            logger.info('train end')
+            logger.info('CV mean score: {0:.4f}, std: {1:.4f}.'.format(np.mean(scores), np.std(scores)))
+        else:
+            self._fit(self.X_train, self.y_train)
+            # feature importance
+            self.feature_importance = pd.DataFrame()
+            self.feature_importance["feature"] = self.X_train.columns
+            self.feature_importance["importance"] = self.model.feature_importances_
+            
+            self.saver.save_model(self.model)
+            self.saver.save_feature_importance(self.feature_importance)
+
+    def _fit(self, X_train, y_train):
+        if self.model_type == 'sklearn':
+            if self.model_name == 'SVC':
+                self.model = SVC(random_state=42, **self.params)
+            if self.model_name == 'NuSVC':
+                self.model = NuSVC(random_state=42, **self.params)
+            if self.model_name == 'RandomForestClassifier':
+                self.model = RandomForestClassifier(n_estimators=1000, random_state=42, **self.params)
+            self.model.fit(X_train, y_train)
+
+    def predict(self):
+        if self.is_ensemble:
+            y_pred = pd.DataFrame(np.zeros((len(self.X_test), self.n_folds)))
+            for fold_n in range(self.n_folds):
+                model = self.models[fold_n]
+                y_pred.loc[:, fold_n] = model.predict(self.X_test)
+            self.prediction = y_pred.mode(axis=1)[0]
+        else:
+            self.prediction = self.model.predict(self.X_test)
+
+        self.pred_score = accuracy_score(self.y_test, self.prediction)
+
+        return self.prediction
+
+    def run(self, is_get_pred=False):
+        self.load_data()
+        self.train()
+        y_pred = self.predict()
+        if is_get_pred:
+            return y_pred
+
+    def get_dataset(self):
+        return self.X_train, self.X_test, self.y_train, self.y_test
+
+    def get_params(self):
+        return self.params
+
+    def get_model(self):
+        if self.is_ensemble:
+            return self.models
+        else:
+            return self.model
+
+    def get_oof(self):
+        return self.oof
+
+    def get_pred(self):
+        return self.prediction
+
+    def get_pred_score(self):
+        return self.pred_score
+
+    def get_feature_importance(self):
+        return self.feature_importance
 
 
 class RegressorModel:
@@ -322,7 +449,6 @@ class RegressorModel:
             self.model.fit(X_train, y_train)
 
     def predict(self):
-        self.prediction = np.zeros((len(self.X_test), 2))
         if self.is_ensemble:
             self.prediction = np.zeros((len(self.X_test), 2))
             for fold_n in range(self.n_folds):
@@ -369,106 +495,38 @@ class RegressorModel:
         return self.feature_importance
 
 
-
 # %%
-def train_classifier_model(X, X_test, y, params=None, folds=None, model_type='lgb', model=None, plot_feature_importance=False):
-    if folds is None:
-        n_fold = 3
-        folds = StratifiedKFold(n_splits=n_fold, shuffle=True, random_state=11)
-    else:
-        n_fold = folds.n_splits
-    oof = np.zeros(len(X))
-    y_pred = pd.DataFrame(np.zeros((len(X_test), n_fold)))
-    scores = []
-    feature_importance = pd.DataFrame()
-    logger.info('train start')
-    for fold_n, (train_index, valid_index) in enumerate(folds.split(X, y)):
-        logger.info(f'    Fold {fold_n}, started at {time.ctime()}')
-        X_train, X_valid = X.iloc[train_index], X.iloc[valid_index]
-        y_train, y_valid = y[train_index], y[valid_index]
-        
-        if model_type == 'lgb':
-            if model is None:
-                model = lgb.LGBMRegressor(**params, n_estimators=50000, n_jobs=-1)
-            model.fit(X_train, y_train, 
-                    eval_set=[(X_train, y_train), (X_valid, y_valid)], eval_metric='mae',
-                    verbose=10000, early_stopping_rounds=200)
-            
-            y_pred_valid = model.predict(X_valid)
-            y_pred.loc[:, fold_n] = model.predict(X_test, num_iteration=model.best_iteration_)
+def classification():
+    cm = ClassifierModel(n_folds=0)
+    cm.load_data()
+    X_train, X_test, y_train, y_test = cm.get_dataset()
+    cm.train(is_override_model=False, is_override_params=False)
+    y_pred = cm.predict()
+    feature_importance = cm.get_feature_importance()
 
-        if model_type == 'sklearn':
-            if model is None:
-                model = RandomForestClassifier(n_estimators=1000, random_state=1)
-            model.fit(X_train, y_train)
-            
-            y_pred_valid = model.predict(X_valid)
-            accuracy = accuracy_score(y_valid, y_pred_valid)
-            f1 = f1_score(y_valid, y_pred_valid, average='macro')
-            logger.info(f'    Fold {fold_n}. Accuracy: {accuracy:.4f}.')
-            logger.info(f'    Fold {fold_n}. Macro-F1: {f1:.4f}.')
-            y_pred.loc[:, fold_n] = model.predict(X_test)
-            
-        if model_type == 'nn':
-            model.fit(x=X_train, y=y_train, validation_data=[X_valid, y_valid], **params)
-    
-            y_pred_valid = model.predict(X_valid)[:, 0]
-            y_pred.loc[:, fold_n] = model.predict(X_test)[:, 0]
-            
-            history = model.history.history
-            train_loss = history["loss"]
-            valid_loss = history["val_loss"]
-            logger.info(f"loss: {train_loss[-1]:.3f} | val_loss: {valid_loss[-1]:.3f} | diff: {train_loss[-1]-valid_loss[-1]:.3f}")
-            
-            if fold_n == 0:
-                plt.figure(figsize=(16, 12))
-            p = plt.plot(train_loss, label=f'train_{fold_n}')
-            plt.plot(valid_loss, '--', label=f'valid_{fold_n}', color=p[0].get_color())
-            plt.grid()
-            plt.legend()
-            plt.xlabel('epoch')
-            plt.ylabel('loss')
+    precision = precision_score(y_test, y_pred, average=None)
+    accuracy = accuracy_score(y_test, y_pred)
+    f1 = f1_score(y_test, y_pred, average=None)
+    logger.info('RESULT:')
+    logger.info('    Precision: {}'.format(precision))
+    logger.info('    Mean of precision: {}'.format(np.mean(precision)))
+    logger.info('    Accuracy: {}'.format(accuracy))
+    logger.info('    F-measure: {}'.format(f1))
+    logger.info('    Mean of f-measure: {}'.format(np.mean(f1)))
+    logger.info('    Params: {}'.format(cm.get_params()))
 
-        oof[valid_index] = y_pred_valid.reshape(-1,)
-        scores.append(mean_absolute_error(y_valid, y_pred_valid))
+    labels = np.unique(y_test)
+    labels.sort()
+    cmx = confusion_matrix(y_test, y_pred, labels=labels)
+    logger.info('Confusion matrix:\n{}'.format(cmx))
+    plot_confusion_matrix(cmx, is_save=False)
+    plot_feature_importance(feature_importance, is_save=False)
 
-        prediction = y_pred.mode(axis=1)[0]
-        
-        if model_type == 'lgb':
-            # feature importance
-            fold_importance = pd.DataFrame()
-            fold_importance["feature"] = X.columns
-            fold_importance["importance"] = model.feature_importances_
-            fold_importance["fold"] = fold_n + 1
-            feature_importance = pd.concat([feature_importance, fold_importance], axis=0)
-
-    logger.info('train end')
-    logger.info('CV mean score: {0:.4f}, std: {1:.4f}.'.format(np.mean(scores), np.std(scores)))
-        
-    if model_type == 'lgb':
-        feature_importance["importance"] /= n_fold
-        if plot_feature_importance:
-            cols = feature_importance[["feature", "importance"]].groupby("feature").mean().sort_values(
-                by="importance", ascending=False)[:50].index
-
-            best_features = feature_importance.loc[feature_importance.feature.isin(cols)]
-
-            plt.figure(figsize=(16, 12))
-            sns.barplot(x="importance", y="feature", data=best_features.sort_values(by="importance", ascending=False))
-            plt.title('LGB Features (avg over folds)')
-        
-            return oof, prediction, feature_importance
-        return oof, prediction
-    
-    else:
-        return oof, prediction
-
-# %%
-def main():
+def regression():
     rm = RegressorModel(n_folds=0)
     rm.load_data()
     X_train, X_test, y_train, y_test = rm.get_dataset()
-    rm.train(is_override_model=True, is_override_params=True)
+    rm.train(is_override_model=False, is_override_params=False)
     y_pred = rm.predict()
     feature_importance = rm.get_feature_importance()
 
@@ -486,7 +544,9 @@ def main():
     plot_score_cdf(euclidean_dist, is_save=False)
     plot_feature_importance(feature_importance, is_save=False)
 
+
 # %%
 if __name__ == "__main__":
     logger = get_logger(__name__)
-    main()
+    classification()
+    # regression()
