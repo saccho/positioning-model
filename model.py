@@ -208,7 +208,7 @@ class Saver:
         try:
             feature_importance = pd.read_json(path)
         except ValueError:
-            feature_importance = None
+            feature_importance = pd.DataFrame()
 
         return feature_importance
 
@@ -238,8 +238,9 @@ class ClassifierModel:
             for fold_n in range(self.n_folds):
                 self.model = self.saver.restore_model(fold_n)
                 self.models.append(self.model)
-        
-        self.feature_importance = self.saver.restore_feature_importance()
+
+        if self.model_name == 'RandomForestRegressor':
+            self.feature_importance = self.saver.restore_feature_importance()
 
     def load_data(self, y_cols=['Position'], isdrop_delay=False, test_size=0.4, is_stratify=True, random_state=2):
         self.X_train, self.X_test, self.y_train, self.y_test = \
@@ -259,7 +260,6 @@ class ClassifierModel:
         if self.is_ensemble:
             self.oof = np.zeros(len(self.X_train))
             scores = []
-            self.feature_importance = pd.DataFrame()
             folds = KFold(n_splits=self.n_folds, shuffle=True, random_state=11)
             for fold_n, (train_index, valid_index) in enumerate(folds.split(self.X_train)):
                 logger.info(f'    Fold {fold_n}, started at {time.ctime()}')
@@ -275,12 +275,12 @@ class ClassifierModel:
                 scores.append(score)
                 self.oof[valid_index] = y_pred_val
 
-                # feature importance
-                fold_importance = pd.DataFrame()
-                fold_importance["feature"] = X_trn.columns
-                fold_importance["importance"] = self.model.feature_importances_
-                fold_importance["fold"] = fold_n + 1
-                self.feature_importance = pd.concat([self.feature_importance, fold_importance], axis=0)
+                if self.model_name == 'RandomForestRegressor':
+                    fold_importance = pd.DataFrame()
+                    fold_importance["feature"] = X_trn.columns
+                    fold_importance["importance"] = self.model.feature_importances_
+                    fold_importance["fold"] = fold_n + 1
+                    self.feature_importance = pd.concat([self.feature_importance, fold_importance], axis=0)
 
                 self.saver.save_model(self.model, fold_n)
 
@@ -291,10 +291,10 @@ class ClassifierModel:
             logger.info('CV mean score: {0:.4f}, std: {1:.4f}.'.format(np.mean(scores), np.std(scores)))
         else:
             self._fit(self.X_train, self.y_train)
-            # feature importance
-            self.feature_importance = pd.DataFrame()
-            self.feature_importance["feature"] = self.X_train.columns
-            self.feature_importance["importance"] = self.model.feature_importances_
+
+            if self.model_name == 'RandomForestRegressor':
+                self.feature_importance["feature"] = self.X_train.columns
+                self.feature_importance["importance"] = self.model.feature_importances_
             
             self.saver.save_model(self.model)
             self.saver.save_feature_importance(self.feature_importance)
@@ -381,8 +381,9 @@ class RegressorModel:
             for fold_n in range(self.n_folds):
                 self.model = self.saver.restore_model(fold_n)
                 self.models.append(self.model)
-        
-        self.feature_importance = self.saver.restore_feature_importance()
+
+        if self.model_name == 'RandomForestRegressor':
+            self.feature_importance = self.saver.restore_feature_importance()
 
     def load_data(self, y_cols=['Position_x', 'Position_y'], isdrop_delay=False, test_size=0.4, is_stratify=False, random_state=2):
         self.X_train, self.X_test, self.y_train, self.y_test = \
@@ -402,7 +403,6 @@ class RegressorModel:
         if self.is_ensemble:
             self.oof = np.zeros((len(self.X_train), 2))
             scores = []
-            self.feature_importance = pd.DataFrame()
             folds = KFold(n_splits=self.n_folds, shuffle=True, random_state=11)
             for fold_n, (train_index, valid_index) in enumerate(folds.split(self.X_train)):
                 logger.info(f'    Fold {fold_n}, started at {time.ctime()}')
@@ -418,12 +418,12 @@ class RegressorModel:
                 scores.append(score)
                 self.oof[valid_index] = y_pred_val
 
-                # feature importance
-                fold_importance = pd.DataFrame()
-                fold_importance["feature"] = X_trn.columns
-                fold_importance["importance"] = self.model.feature_importances_
-                fold_importance["fold"] = fold_n + 1
-                self.feature_importance = pd.concat([self.feature_importance, fold_importance], axis=0)
+                if self.model_name == 'RandomForestRegressor':
+                    fold_importance = pd.DataFrame()
+                    fold_importance["feature"] = X_trn.columns
+                    fold_importance["importance"] = self.model.feature_importances_
+                    fold_importance["fold"] = fold_n + 1
+                    self.feature_importance = pd.concat([self.feature_importance, fold_importance], axis=0)
 
                 self.saver.save_model(self.model, fold_n)
 
@@ -434,10 +434,10 @@ class RegressorModel:
             logger.info('CV mean score: {0:.4f}, std: {1:.4f}.'.format(np.mean(scores), np.std(scores)))
         else:
             self._fit(self.X_train, self.y_train)
-            # feature importance
-            self.feature_importance = pd.DataFrame()
-            self.feature_importance["feature"] = self.X_train.columns
-            self.feature_importance["importance"] = self.model.feature_importances_
+
+            if self.model_name == 'RandomForestRegressor':
+                self.feature_importance["feature"] = self.X_train.columns
+                self.feature_importance["importance"] = self.model.feature_importances_
             
             self.saver.save_model(self.model)
             self.saver.save_feature_importance(self.feature_importance)
@@ -548,5 +548,5 @@ def regression():
 # %%
 if __name__ == "__main__":
     logger = get_logger(__name__)
-    classification()
-    # regression()
+    # classification()
+    regression()
