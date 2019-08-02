@@ -3,18 +3,17 @@ import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from logger import get_logger
-from config import DATASET_FILE_PATH, DATA_COL_NAMES
+from config import DATASET_FILE_PATH, DATA_COL_NAMES, X_COL_NAMES, Y_COL_NAMES
 
 logger = get_logger(__name__)
 
-def load_data(y_cols=('Position',), is_drop_delay=False, test_size=0.45, is_stratify=True, random_state=0):
+def load_data(is_drop_delay=False, test_size=0.45, is_stratify=True, random_state=0):
     data_df = load_measured_data(is_drop_delay)
 
     logger.debug('split for training and testing')
-    X_cols = [c for c in DATA_COL_NAMES if c not in y_cols]
-    X = data_df.loc[:, X_cols].values
-    y = data_df.loc[:, y_cols].values
-    if len(y_cols) == 1:
+    X = data_df.loc[:, X_COL_NAMES].values
+    y = data_df.loc[:, Y_COL_NAMES].values
+    if len(Y_COL_NAMES) == 1:
         y = y.reshape(-1)
 
     if is_stratify:
@@ -22,8 +21,8 @@ def load_data(y_cols=('Position',), is_drop_delay=False, test_size=0.45, is_stra
     else:
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, random_state=random_state)
 
-    X_train_df = pd.DataFrame(X_train, columns=X_cols)
-    X_test_df = pd.DataFrame(X_test, columns=X_cols)
+    X_train_df = pd.DataFrame(X_train, columns=X_COL_NAMES)
+    X_test_df = pd.DataFrame(X_test, columns=X_COL_NAMES)
 
     logger.info('train shape: {}, test shape: {}'.format(np.shape(X_train), np.shape(X_test)))
     # Count labels

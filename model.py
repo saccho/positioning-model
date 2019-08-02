@@ -244,9 +244,9 @@ class ClassifierModel:
         if self.model_name == 'RandomForestClassifier':
             self.feature_importance = self.saver.restore_feature_importance()
 
-    def load_data(self, y_cols=['Position'], isdrop_delay=False, test_size=0.4, is_stratify=True, random_state=2):
+    def load_data(self, isdrop_delay=False, test_size=0.4, is_stratify=True, random_state=2):
         self.X_train, self.X_test, self.y_train, self.y_test = \
-            load_data(y_cols=y_cols, test_size=test_size, is_stratify=is_stratify, random_state=random_state)
+            load_data(test_size=test_size, is_stratify=is_stratify, random_state=random_state)
 
     def _param_tuning(self):
         _, self.params = model_tuning(self.X_train, self.y_train, self.model_name, n_trials=20)
@@ -387,9 +387,9 @@ class RegressorModel:
         if self.model_name == 'RandomForestRegressor':
             self.feature_importance = self.saver.restore_feature_importance()
 
-    def load_data(self, y_cols=['Position_x', 'Position_y'], isdrop_delay=False, test_size=0.4, is_stratify=False, random_state=2):
+    def load_data(self, isdrop_delay=False, test_size=0.4, is_stratify=False, random_state=2):
         self.X_train, self.X_test, self.y_train, self.y_test = \
-            load_data(y_cols=y_cols, test_size=test_size, is_stratify=is_stratify, random_state=random_state)
+            load_data(test_size=test_size, is_stratify=is_stratify, random_state=random_state)
 
     def _param_tuning(self):
         _, self.params = model_tuning(self.X_train, self.y_train, self.model_name, n_trials=20)
