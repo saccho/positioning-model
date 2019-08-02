@@ -198,7 +198,10 @@ class Saver:
 
     def save_feature_importance(self, feature_importance):
         path = os.path.join(self.root, 'feature_importance.json')
-        feature_importance.to_json(path, orient='records')
+        try:
+            feature_importance.to_json(path, orient='records')
+        except AttributeError:
+            return
 
     def restore_feature_importance(self):
         path = os.path.join(self.root, 'feature_importance.json')
