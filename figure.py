@@ -105,7 +105,7 @@ def features_frequency(data_df):
             for k, v in zip(vc_obj_key, vc_obj_val):
                 logger.debug(f'    {k}: {v:.2f}%')
 
-def plot_confusion_matrix(cmx):
+def plot_confusion_matrix(cmx, is_save=False):
     logger.debug('plot confusion matrix')
     sns.set(font_scale=3.0)
     colormap = plt.get_cmap('Blues')
@@ -115,6 +115,8 @@ def plot_confusion_matrix(cmx):
     fig.set_xticklabels(fig.get_xticklabels(), rotation=0)
     fig.set_yticklabels(fig.get_yticklabels(), rotation=0)
     plt.tight_layout()
+    if is_save:
+        plt.savefig(os.path.join(FIGURE_SAVE_PATH, 'confusion_matrix.png'))
     plt.show()
 
 def pred_animation(y_test, y_pred, is_save=False):
