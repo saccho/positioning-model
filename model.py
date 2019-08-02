@@ -154,27 +154,29 @@ def model_tuning(X_train, y_train, model_name, n_trials=10):
 
 
 class Saver:
-    def __init__(self, est_type):
+    def __init__(self, est_type, model_name):
         if est_type == 'classifier':
             self.root = TRAINED_CLF_MODEL_PATH
         elif est_type == 'regressor':
             self.root = TRAINED_REG_MODEL_PATH
         else:
             raise ValueError('est_type must be "classifier" or "regressor".')
+        
+        self.model_name = model_name
 
     def save_model(self, model, fold_n=None):
         if fold_n is None:
-            path = os.path.join(self.root, 'model.pkl')
+            path = os.path.join(self.root, f'{self.model_name}_model.pkl')
         else:
-            path = os.path.join(self.root, f'model_fold{fold_n}.pkl')
+            path = os.path.join(self.root, f'{self.model_name}_model_fold{fold_n}.pkl')
 
         joblib.dump(model, path)
         
     def restore_model(self, fold_n=None):
         if fold_n is None:
-            path = os.path.join(self.root, 'model.pkl')
+            path = os.path.join(self.root, f'{self.model_name}_model.pkl')
         else:
-            path = os.path.join(self.root, f'model_fold{fold_n}.pkl')
+            path = os.path.join(self.root, f'{self.model_name}_model_fold{fold_n}.pkl')
 
         try:
             model = joblib.load(path)
@@ -184,11 +186,11 @@ class Saver:
         return model
 
     def save_params(self, params):
-        path = os.path.join(self.root, 'params.json')
+        path = os.path.join(self.root, f'{self.model_name}_params.json')
         pd.Series(params).to_json(path)
         
     def restore_params(self):
-        path = os.path.join(self.root, 'params.json')
+        path = os.path.join(self.root, f'{self.model_name}_params.json')
         try:
             params = pd.read_json(path, typ='series').to_dict()
         except ValueError:
@@ -197,14 +199,14 @@ class Saver:
         return params
 
     def save_feature_importance(self, feature_importance):
-        path = os.path.join(self.root, 'feature_importance.json')
+        path = os.path.join(self.root, f'{self.model_name}_feature_importance.json')
         try:
             feature_importance.to_json(path, orient='records')
         except AttributeError:
             return
 
     def restore_feature_importance(self):
-        path = os.path.join(self.root, 'feature_importance.json')
+        path = os.path.join(self.root, f'{self.model_name}_feature_importance.json')
         try:
             feature_importance = pd.read_json(path)
         except ValueError:
@@ -217,7 +219,6 @@ class Saver:
 class ClassifierModel:
     def __init__(self, model_type='sklearn', model_name=None, n_folds=3):
         self.est_type = 'classifier'
-        self.saver = Saver(self.est_type)
         self.model_type = model_type
         if self.model_type == 'sklearn':
             if model_name is None:
@@ -225,6 +226,7 @@ class ClassifierModel:
         else:
             raise ValueError('model_type supported by current version is "sklearn" only.')
 
+        self.saver = Saver(self.est_type, self.model_name)
         self.params = self.saver.restore_params()
 
         if n_folds == 0:
@@ -358,7 +360,6 @@ class ClassifierModel:
 class RegressorModel:
     def __init__(self, model_type='sklearn', model_name=None, n_folds=3):
         self.est_type = 'regressor'
-        self.saver = Saver(self.est_type)
         self.model_type = model_type
         if self.model_type == 'sklearn':
             if model_name is None:
@@ -368,6 +369,7 @@ class RegressorModel:
         else:
             raise ValueError('model_type supported by current version is "sklearn" only.')
 
+        self.saver = Saver(self.est_type, self.model_name)
         self.params = self.saver.restore_params()
 
         if n_folds == 0:
