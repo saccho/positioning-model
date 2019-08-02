@@ -244,7 +244,7 @@ class ClassifierModel:
         if self.model_name == 'RandomForestClassifier':
             self.feature_importance = self.saver.restore_feature_importance()
 
-    def load_data(self, isdrop_delay=False, test_size=0.4, is_stratify=True, random_state=2):
+    def load_data(self, test_size=0.4, is_stratify=True, random_state=2):
         self.X_train, self.X_test, self.y_train, self.y_test = \
             load_data(test_size=test_size, is_stratify=is_stratify, random_state=random_state)
 
@@ -387,7 +387,7 @@ class RegressorModel:
         if self.model_name == 'RandomForestRegressor':
             self.feature_importance = self.saver.restore_feature_importance()
 
-    def load_data(self, isdrop_delay=False, test_size=0.4, is_stratify=False, random_state=2):
+    def load_data(self, test_size=0.4, is_stratify=False, random_state=2):
         self.X_train, self.X_test, self.y_train, self.y_test = \
             load_data(test_size=test_size, is_stratify=is_stratify, random_state=random_state)
 
