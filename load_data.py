@@ -14,6 +14,8 @@ def load_data(y_cols=('Position',), is_drop_delay=False, test_size=0.45, is_stra
     X_cols = [c for c in DATA_COL_NAMES if c not in y_cols]
     X = data_df.loc[:, X_cols].values
     y = data_df.loc[:, y_cols].values
+    if len(y_cols) == 1:
+        y = y.reshape(-1)
 
     if is_stratify:
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, random_state=random_state, stratify=y)
