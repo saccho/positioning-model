@@ -153,6 +153,7 @@ def plot_score(y_test, y_pred_score, is_save=False):
     cbar.set_label('Error (m)')
     plt.xlim(0, 7.8)
     plt.ylim(0, 8.8)
+    plt.clim(0, 6.5)
     plt.xlabel(r'$x$ (m)')
     plt.ylabel(r'$y$ (m)')
     if is_save:
@@ -162,10 +163,10 @@ def plot_score(y_test, y_pred_score, is_save=False):
 def plot_score_cdf(y_pred_score, is_save=False):
     plt.figure(figsize=(10, 10))
     sorted_score = np.sort(y_pred_score)
-    cdf = np.arange(len(sorted_score))/float(len(sorted_score)-1)
+    cdf = np.arange(1, len(sorted_score)+1)/float(len(sorted_score))
     plt.plot(sorted_score, cdf, lw=3, marker='o', ms=12)
     plt.grid(True)
-    plt.xlim(0, y_pred_score.max())
+    plt.xlim(0, 6.5)
     plt.ylim(0, 1)
     plt.xlabel('Error (m)')
     plt.ylabel('Cumulative probability')
