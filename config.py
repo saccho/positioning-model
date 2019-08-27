@@ -3,6 +3,7 @@ import os
 MEASURED_DAY = '20190726'
 DATA_FILE_PATH = os.path.join('data', MEASURED_DAY)
 DATASET_FILE_PATH = os.path.join(DATA_FILE_PATH, 'y_dataset.csv')
+LABEL_FILE_PATH = None
 
 if MEASURED_DAY == '20190626':
     DATA_COL_NAMES = [
@@ -29,6 +30,8 @@ if MEASURED_DAY == '20190726':
     ]
     X_COL_NAMES = DATA_COL_NAMES[2:]
     Y_COL_NAMES = DATA_COL_NAMES[:2]
+
+    LABEL_FILE_PATH = os.path.join(DATA_FILE_PATH, 'label.csv')
 
 LOG_FILE_PATH = os.path.join('log', f'use_{MEASURED_DAY}_data.log')
 ROOM_IMAGE_PATH = os.path.join('data', 'room.png')
